@@ -22,7 +22,7 @@ const unzipper = require("unzipper"),
  */
 const unzip = (pathIn, pathOut) => {
   fs.createReadStream(pathIn)
-    .pipe(unzipper.Extract(pathOut))
+    .pipe(unzipper.Extract({path: pathOut}))
     .on("error", (err) => {
       console.error("Error:", err);
     })
@@ -30,6 +30,8 @@ const unzip = (pathIn, pathOut) => {
       console.log("Extraction operation complete")
     })
 };
+
+// Windows Issue, unzipper!
 
 /**
  * Description: read all the png files from given directory and return Promise containing array of each png file path
@@ -44,8 +46,7 @@ const readDir = (dir) => {
         reject(err);
       } else {
         const pngFiles = files.filter((file) => path.extname(file).toLowerCase() === '.png');
-        const pngFilePaths = pngFiles.map((file) => path.join(dir, file));
-        resolve(pngFilePaths);
+        resolve(pngFiles);
       }
     })
   })

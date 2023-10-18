@@ -15,19 +15,18 @@ const pathUnzipped = path.join(__dirname, "unzipped");
 const pathProcessed = path.join(__dirname, "grayscaled");
 
 IOhandler.unzip(zipFilePath, pathUnzipped)
-  .then(() => IOhandler.readDir(pathUnzipped))
-  .then((array) => {
-    const grayscalingPromises = array.map((pngPath) =>
-      IOhandler.grayScale(pngPath, pathProcessed)
-    );
-    return Promise.all(grayscalingPromises);
-  })
-  .then(() => {
-    console.log('Successfully Generated');
-  })
-  .catch((err) => {
-    console.error(`Error: ${err}`);
-  });
+IOhandler.readDir(pathUnzipped)
+    .then((array) => {
+        const grayscalingPromises = array.map((pngPath) =>
+        IOhandler.grayScale(`${pathUnzipped}/${pngPath}`, `${pathProcessed}/${pngPath}`))
+        return Promise.all(grayscalingPromises);
+    })
+    .then(() => {
+        console.log('Successfully Generated');
+    })
+    .catch((err) => {
+        console.error(`Error: ${err}`);
+    });
 
 // Step 1: Read the zip file
 // Step 2: Unzip the zip file
