@@ -23,8 +23,11 @@ const unzipper = require("unzipper"),
 const unzip = (pathIn, pathOut) => {
   fs.createReadStream(pathIn)
     .pipe(unzipper.Extract(pathOut))
-    .on("error", () => {
+    .on("error", (err) => {
       console.error("Error:", err);
+    })
+    .on("finish", () => {
+      console.log("Extraction operation complete")
     })
 };
 
@@ -35,14 +38,16 @@ const unzip = (pathIn, pathOut) => {
  * @return {promise}
  */
 const readDir = (dir) => {
-  fs.readdir(dir, (err, files) => {
-    if (err) {
-      rejects(err);
-    } else {
-      const pngFiles = files.filter((file) => path.extname(file).toLowerCase() === '.png');
-      const pngFilePaths = pngFiles.map((file) => path.join(dir, file));
-      resolve(pngFilePaths);
-    }
+  return new Promise((resolve, reject) => {
+    fs.readdir(dir, (err, files) => {
+      if (err) {
+        reject(err);
+      } else {
+        const pngFiles = files.filter((file) => path.extname(file).toLowerCase() === '.png');
+        const pngFilePaths = pngFiles.map((file) => path.join(dir, file));
+        resolve(pngFilePaths);
+      }
+    })
   })
 };
 
@@ -54,7 +59,38 @@ const readDir = (dir) => {
  * @param {string} pathProcessed
  * @return {promise}
  */
-const grayScale = (pathIn, pathOut) => {};
+const grayScale = (pathIn, pathOut) => {
+  const readableStream = fs.createReadStream(pathIn);
+  const transformStream = new PNG({ filterType: 4 });
+  const writableStream = fs.createWriteStream(pathOut);
+  
+  readableStream
+    .pipe(transformStream)
+    .on("parsed", function () {
+        for (var y = 0; y < this.height; y++) {
+          for (var x = 0; x < this.width; x++) {
+            var idx = (this.width * y + x) << 2;
+     
+            // gray algorithm
+            const red = this.data[idx];
+            const green = this.data[idx + 1];
+            const blue = this.data[idx + 2];
+
+            const gray = (red + green + blue) / 3;
+
+            this.data[idx] = gray;
+            this.data[idx + 1] = gray;
+            this.data[idx + 2] = gray;
+          }
+        }
+
+        this.pack().pipe(writableStream);
+    })
+    .on("error", function (err) {
+        console.error("Error:", err);
+    });
+};
+
 
 module.exports = {
   unzip,
